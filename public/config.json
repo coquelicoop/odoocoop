@@ -1,0 +1,4 @@
+{
+    "odooproxy": "http://localhost:8090",
+    "envs": { "p": "Production", "s": "Staging-Test" }
+}
