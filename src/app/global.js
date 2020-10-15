@@ -231,6 +231,7 @@ export function centimes (s) {
 
 export function decoreArticles (liste, saufErreur) {
   const res = []
+  let nberr = 0
   for (let i = 0; i < liste.length; i++) {
     const data = liste[i]
     data.erreurs = []
@@ -307,12 +308,13 @@ export function decoreArticles (liste, saufErreur) {
       }
     } else data.image = ''
 
+    if (data.erreurs.length) nberr++
     if (!data.erreurs.length || !saufErreur) {
       res.push(data)
       data.n = res.length
     }
   }
-  return res
+  return [nberr, res]
 }
 
 export function removeDiacritics (str) {
