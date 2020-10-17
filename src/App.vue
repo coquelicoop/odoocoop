@@ -29,8 +29,8 @@
         <q-item>
           <q-select v-model="cenv" :options="envs" label="Environnements" style="width:10rem"/>
         </q-item>
-        <q-item v-if="email ? true : false">
-          <q-btn :label="'Déconnecter ' + email" @click="deconnecter"/>
+        <q-item v-if="username ? true : false">
+          <q-btn :label="'Déconnecter ' + username" @click="deconnecter"/>
         </q-item>
       </q-list>
     </q-drawer>
@@ -61,7 +61,8 @@
     <q-dialog v-model="loginOuvert" persistent transition-show="flip-down" transition-hide="flip-up">
       <q-card class="bg-white" style="width: 300px">
         <q-card-section>
-        <q-input bottom-slots v-model="email" label="E-mail" style="width:15rem">
+        <q-select v-model="cenv" :options="envs" label="Environnements" style="width:10rem"/>
+        <q-input bottom-slots v-model="username" label="E-mail" style="width:15rem">
           <template v-slot:hint>
             E-mail de connexion à Odoo
           </template>
@@ -69,7 +70,7 @@
         </q-card-section>
 
         <q-card-section class="q-pt-none">
-        <q-input bottom-slots v-model="motdepasse" type="password" label="Mot de passe" style="width:15rem">
+        <q-input bottom-slots v-model="password" type="password" label="Mot de passe" style="width:15rem">
         </q-input>
         </q-card-section>
 
@@ -92,14 +93,22 @@
       </q-card>
     </q-dialog>
 
-    <q-dialog v-model="erreur">
-      <q-card>
+    <q-dialog v-model="erreurOuvert">
+      <q-card  style="width:500px;max-width:80vw;">>
         <q-card-section>
-          <div class="text-h6">{{detail.majeur}}</div>
+          <div class="text-h6">{{erreur.majeur}}</div>
         </q-card-section>
         <q-card-section class="q-pt-none">
-          <div v-if="detail.code !== 0">Code : {{ detail.code }}</div>
-          <div>{{ detail.message }}</div>
+          <div>Code : {{ erreur.code }}</div>
+          <div v-if="erreur.message">{{ erreur.message }}</div>
+          <div v-if="erreur.detail">
+            Détail <q-toggle v-model="errdetail"/>
+            <span v-if="errdetail">{{ erreur.detail }}</span>
+          </div>
+          <div v-if="erreur.stack">
+            Stack <q-toggle v-model="errstack"/>
+            <q-input v-if="errstack" type="textarea" v-model="erreur.stack" style="height:150px;"/>
+          </div>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="j'ai lu" color="primary" v-close-popup />
@@ -122,19 +131,21 @@ export default {
     return {
       menuOuvert: false,
       loginOuvert: true,
-      email: '',
-      motdepasse: '',
+      erreurOuvert: false,
+      username: '',
+      password: '',
       abort: false,
       img: null,
       codebarre: '',
       config: { host: '?' },
-      detail: {},
+      erreur: {},
+      errstack: false,
+      errdetail: false,
       tab: 'accueil',
       info: 'Bonjour !',
       cenv: '',
       env: 'p',
-      envs: [],
-      erreur: null
+      envs: []
     }
   },
   async mounted () {
@@ -164,8 +175,10 @@ export default {
     },
 
     displayErreur (e) {
-      this.erreur = true
-      this.detail = e
+      this.errdetail = false
+      this.errstack = false
+      this.erreurOuvert = true
+      this.erreur = e
     },
 
     setInfo (s) {
@@ -183,9 +196,7 @@ export default {
     async connection () {
       this.opStart()
       try {
-        const mp = this.motdepasse
-        this.motdepasse = ''
-        const res = await post('m1/connection', { email: this.email, motdepasse: mp })
+        const res = await post('m1/connection')
         console.log(res.ok)
         this.loginOuvert = false
       } catch (e) { }
@@ -193,7 +204,7 @@ export default {
     },
 
     deconnecter () {
-      this.email = ''
+      this.username = ''
       this.tab = 'accueil'
       this.loginOuvert = true
       this.menuOuvert = false

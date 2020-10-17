@@ -13,7 +13,8 @@
 
 <script>
 import CarteArticle from './CarteArticle.vue'
-import { global, post, decoreArticles, removeDiacritics } from '../app/global.js'
+import { global, post, decoreArticles } from '../app/global.js'
+import { remove } from '../app/accents.js'
 
 export default {
   name: 'ListeArticles',
@@ -110,7 +111,7 @@ export default {
       let n = parseInt(this.argFiltre)
       if (isNaN(n)) { n = 0 }
       const p = this.argFiltre || ''
-      const P = removeDiacritics(p.toUpperCase())
+      const P = remove(p.toUpperCase())
       const s = this.tousArticles
       switch (c) {
         case 0 : { this.selArticles = s.filter(a => true); break }
