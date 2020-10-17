@@ -236,13 +236,16 @@ export function centimes (s) {
 
 // liste des colonnes ['id', 'nom', 'code-barre', 'prix', 'categorie', 'unite', 'image']
 
-export function decoreArticles (liste, saufErreur) {
+export function decoreArticles (liste, saufErreur, lgn) {
+  // lgn = global.lgnomsuretiquette || 32 // Nombre de caractères max apparaissant sur une ligne d'étiquette
   const res = []
   let nberr = 0
   for (let i = 0; i < liste.length; i++) {
     const data = liste[i]
     data.erreurs = []
     data.nomN = ''
+    data.nom1 = ''
+    data.nom2 = ''
     data.codeCourt = ''
     data.bio = false
     data.prixN = 0
@@ -271,7 +274,33 @@ export function decoreArticles (liste, saufErreur) {
       On détermine aussi si c'est BIO et pour un article à l'unité son poids moyen éventuel
       */
       data.codeCourt = codeCourtDeId(data.id, data.nom)
-      if (!saufErreur) data.nomN = remove(data.nom.toUpperCase())
+      data.nomN = remove(data.nom.toUpperCase())
+      /*
+      Calcule les une ou deux lignes de dénomination du produit apparaissant sur l'étiquette
+      Une ligne a un nombre maximal de caractères
+      Les mots ne sont pas coupés
+      */
+      const nom = ['', '']
+      let j = 0
+      const nx = data.nom.trim().split(' ')
+      nx.splice(0, 0, '[' + data.codeCourt + ']')
+      for (let i = 0; i < nx.length && j < 2; i++) {
+        const m = nx[i]
+        if (nom[j].length + m.length + 1 < lgn) {
+          if (nom[j].length) {
+            nom[j] = nom[j] + ' ' + m
+          } else {
+            nom[j] = m
+          }
+        } else {
+          j++
+          if (j < 2) {
+            nom[j] = m
+          }
+        }
+      }
+      data.nom1 = nom[0] // Première ligne du nom
+      data.nom2 = nom[1] // Seconde ligne du nom
       data.bio = (data.nomN.indexOf('BIO') !== -1)
     }
 
@@ -318,7 +347,7 @@ export function decoreArticles (liste, saufErreur) {
     if (data.erreurs.length) nberr++
     if (!data.erreurs.length || !saufErreur) {
       res.push(data)
-      data.n = res.length
+      data.idx = res.length
     }
   }
   return [nberr, res]
