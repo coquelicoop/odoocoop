@@ -19,6 +19,7 @@ module.exports = function (/* ctx */) {
     // --> boot files are part of "main.js"
     // https://quasar.dev/quasar-cli/boot-files
     boot: [
+
     ],
 
     // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css
@@ -93,8 +94,8 @@ module.exports = function (/* ctx */) {
       // (like functional components as one of the examples),
       // you can manually specify Quasar components/directives to be available everywhere:
       //
-      components: [],
-      directives: [],
+      // components: [],
+      // directives: [],
 
       // Quasar plugins
       plugins: []
@@ -116,7 +117,7 @@ module.exports = function (/* ctx */) {
       manifest: {
         name: 'Quasar App',
         short_name: 'Quasar App',
-        description: 'Application Web périphérique pour Coquelicoop ',
+        description: 'A Quasar Framework app',
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#ffffff',
@@ -181,7 +182,7 @@ module.exports = function (/* ctx */) {
       builder: {
         // https://www.electron.build/configuration/configuration
 
-        appId: 'coop'
+        appId: 't1'
       },
 
       // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration

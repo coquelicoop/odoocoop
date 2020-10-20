@@ -1,9 +1,9 @@
 {
-  "name": "odoocoop",
-  "version": "0.0.1",
-  "description": "Application Web périphérique pour Coquelicoop ",
-  "productName": "Coquelicoop",
-  "author": "daniel@sportes.fr",
+  "name": "applis",
+  "version": "1.0.1",
+  "description": "Application du magasin",
+  "productName": "applis",
+  "author": "Daniel Sportes <daniel@sportes.fr>",
   "private": true,
   "scripts": {
     "lint": "eslint --ext .js,.vue ./",
@@ -11,14 +11,17 @@
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",
-    "axios": "^0.20.0",
     "core-js": "^3.6.5",
-    "json-loader": "^0.5.7",
-    "quasar": "^1.0.0"
+    "quasar": "^1.0.0",
+    "axios": "^0.20.0"
   },
   "devDependencies": {
     "@quasar/app": "^2.0.0",
     "babel-eslint": "^10.0.1",
+    "devtron": "^1.4.0",
+    "electron": "^9.3.2",
+    "electron-debug": "^3.1.0",
+    "electron-devtools-installer": "^3.1.1",
     "eslint": "^6.8.0",
     "eslint-config-standard": "^14.1.0",
     "eslint-loader": "^3.0.3",

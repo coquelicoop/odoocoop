@@ -1,4 +1,4 @@
 {
-    "odooproxy": "http://localhost:8091",
+    "odooproxy": "https://odooproxy.coquelicoop.fr",
     "envs": { "p": "Production", "s": "Staging-Test" }
 }

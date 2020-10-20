@@ -59,10 +59,10 @@
     </q-page-container>
 
     <q-dialog v-model="loginOuvert" persistent transition-show="flip-down" transition-hide="flip-up">
-      <q-card class="bg-white" style="width: 300px">
+      <q-card style="width: 300px">
         <q-card-section>
         <q-select v-model="cenv" :options="envs" label="Environnements" style="width:10rem"/>
-        <q-input bottom-slots v-model="username" label="E-mail" style="width:15rem">
+        <q-input input-class="login" bottom-slots v-model="username" label="E-mail" style="width:15rem">
           <template v-slot:hint>
             E-mail de connexion à Odoo
           </template>
@@ -70,7 +70,7 @@
         </q-card-section>
 
         <q-card-section class="q-pt-none">
-        <q-input bottom-slots v-model="password" type="password" label="Mot de passe" style="width:15rem">
+        <q-input input-class="login" bottom-slots v-model="password" type="password" label="Mot de passe" style="width:15rem">
         </q-input>
         </q-card-section>
 
@@ -237,4 +237,7 @@ export default {
   text-align: center
   background-color: white
   color: red
+.login
+  font-size: $largeFontSize
+  font-weight: bold
 </style>
