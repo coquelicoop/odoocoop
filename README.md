@@ -1,29 +1,11 @@
-# Quasar App (coop)
 
-Application Web périphérique pour Coquelicoop 
+L'application odoocoop est en quasar 2.
 
-## Install the dependencies
-```bash
-npm install
-```
-
-### Start the app in development mode (hot-code reloading, error reporting, etc.)
-```bash
 quasar dev
-```
-
-### Lint the files
-```bash
-npm run lint
-```
-
-### Build the app for production
-```bash
 quasar build
-```
 
-### Customize the configuration
-See [Configuring quasar.conf.js](https://quasar.dev/quasar-cli/quasar-conf-js).
+Pour obtenir l'application, zip de dist/spa
+Exécution simple locale :
+Dans dist/spa
+> python3 -m http.server 8095
 
-python3 -m hht.server 8090
-dans le director contenat le builde l'appli

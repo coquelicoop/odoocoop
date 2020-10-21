@@ -3,13 +3,13 @@
     <q-header elevated class="text-white bg-grey-9">
       <q-toolbar>
         <q-btn flat round @click="menuOuvert = true" icon="menu" aria-label="Menu"/>
-        <q-toolbar-title>Utilitaires Odoo
+        <q-toolbar-title>Applications du magasin
           <div v-if="env !== 'p'" class="env">{{cenv}}</div>
         </q-toolbar-title>
-        <q-tabs v-model="tab" no-caps class="text-white shadow-2">
+        <q-tabs v-model="tab" no-caps inline-label class="text-white shadow-2">
           <q-tab name="accueil" label="Accueil" />
+          <q-tab name="apeser" label="Articles à peser" icon="img:tomate.png"/>
           <q-tab name="codebarre" label="Code barre" />
-          <q-tab name="apeser" label="Articles à peser" />
         </q-tabs>
       </q-toolbar>
       <tool-bar-articles v-if="tab == 'apeser'"></tool-bar-articles>
@@ -37,40 +37,24 @@
 
     <!-- Zone centrale -->
     <q-page-container>
-      <div v-if="tab === 'accueil'">Bonjour !
-        <p v-for="n in 15" :key="n">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Fugit nihil praesentium molestias a adipisci, dolore vitae odit, quidem consequatur optio voluptates asperiores pariatur eos numquam rerum delectus commodi perferendis voluptate?
-        </p>
-      </div>
-      <div v-if="tab === 'codebarre'">
-        <q-input bottom-slots v-model="codebarre" label="Code barre" counter maxlength="13" style="width:15rem">
-          <template v-slot:hint>
-            13 chiffres
-          </template>
-          <template v-slot:append>
-            <q-btn round dense flat icon="check" @click="getCodeBarre" />
-          </template>
-        </q-input>
-        <img :src="img"/>
-      </div>
-      <div v-if="tab === 'apeser'">
-        <liste-articles></liste-articles>
-      </div>
+      <div v-if="tab === 'accueil'"><vue-accueil></vue-accueil></div>
+      <div v-if="tab === 'codebarre'"><code-barre></code-barre></div>
+      <div v-if="tab === 'apeser'"><liste-articles></liste-articles></div>
     </q-page-container>
 
     <q-dialog v-model="loginOuvert" persistent transition-show="flip-down" transition-hide="flip-up">
-      <q-card style="width: 300px">
+      <q-card>
         <q-card-section>
         <q-select v-model="cenv" :options="envs" label="Environnements" style="width:10rem"/>
-        <q-input input-class="login" bottom-slots v-model="username" label="E-mail" style="width:15rem">
-          <template v-slot:hint>
-            E-mail de connexion à Odoo
+        <q-input input-class="login" bottom-slots v-model="username" label-slot style="width:20rem">
+          <template v-slot:label>
+            <span class="login">E-mail de connexion au portail</span>
           </template>
         </q-input>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-        <q-input input-class="login" bottom-slots v-model="password" type="password" label="Mot de passe" style="width:15rem">
+        <q-input input-class="login" bottom-slots v-model="password" type="password" label-slot style="width:20rem">
+          <template v-slot:label>
+            <span class="login">Mot de passe</span>
+          </template>
         </q-input>
         </q-card-section>
 
@@ -120,13 +104,15 @@
 </template>
 
 <script>
-import { global, loadConfig, get, post, cancelRequest, checkEAN13 } from './app/global.js'
+import { global, loadConfig, post, cancelRequest } from './app/global.js'
 import ListeArticles from './components/ListeArticles.vue'
 import ToolBarArticles from './components/ToolBarArticles.vue'
+import CodeBarre from './components/CodeBarre.vue'
+import VueAccueil from './components/VueAccueil.vue'
 
 export default {
   name: 'App',
-  components: { ToolBarArticles, ListeArticles },
+  components: { ToolBarArticles, ListeArticles, CodeBarre, VueAccueil },
   data () {
     return {
       menuOuvert: false,
@@ -208,16 +194,6 @@ export default {
       this.tab = 'accueil'
       this.loginOuvert = true
       this.menuOuvert = false
-    },
-
-    async getCodeBarre () { // 3254550031046
-      if (!checkEAN13(this.codebarre)) return
-      this.opStart()
-      this.img = null
-      try {
-        this.img = await get('m1/codebarre?cb=' + this.codebarre)
-      } catch (e) { }
-      this.opComplete()
     }
   }
 }
@@ -238,6 +214,6 @@ export default {
   background-color: white
   color: red
 .login
-  font-size: $largeFontSize
+  font-size: $standardFontSize
   font-weight: bold
 </style>
