@@ -21,13 +21,13 @@
 
     <!-- Le panneau gauche est le Menu -->
     <q-drawer v-model="menuOuvert" overlay bordered content-class="bg-white" :width="450">
-      <div class="absolute" style="top:0;right:-2rem">
+      <div class="absolute" style="top:0;right:-1rem">
         <!-- Bouton pour refermer le panneau : invisible quand le panneau n'est visible, sinon on en voit quand même un bout -->
         <q-btn v-if="menuOuvert" dense round unelevated color="accent" icon="chevron_left" @click="menuOuvert = false"/>
       </div>
       <q-list bordered separator>
         <q-item>
-          <q-select v-model="cenv" :options="envs" label="Environnements" style="width:10rem"/>
+          Version : {{ version }}
         </q-item>
         <q-item v-if="username ? true : false">
           <q-btn :label="'Déconnecter ' + username" @click="deconnecter"/>
@@ -104,6 +104,7 @@
 </template>
 
 <script>
+import { version } from '../package.json'
 import { global, loadConfig, post, cancelRequest } from './app/global.js'
 import ListeArticles from './components/ListeArticles.vue'
 import ToolBarArticles from './components/ToolBarArticles.vue'
@@ -115,6 +116,7 @@ export default {
   components: { ToolBarArticles, ListeArticles, CodeBarre, VueAccueil },
   data () {
     return {
+      version: version,
       menuOuvert: false,
       loginOuvert: true,
       erreurOuvert: false,
