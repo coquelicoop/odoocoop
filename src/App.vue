@@ -163,6 +163,7 @@ export default {
     },
 
     displayErreur (e) {
+      // métode à invoquer pour afficher une erreur
       this.errdetail = false
       this.errstack = false
       this.erreurOuvert = true
@@ -170,14 +171,17 @@ export default {
     },
 
     setInfo (s) {
+      // affiche une info dans la barre d'info en bas
       this.info = s
     },
 
     opStart () {
+      // à invoquer avant toute requête au proxy
       this.abort = true
     },
 
     opComplete () {
+      // à invoquer après une requête au proxy
       this.abort = false
     },
 
@@ -216,6 +220,5 @@ export default {
   background-color: white
   color: red
 .login
-  font-size: $standardFontSize
   font-weight: bold
 </style>

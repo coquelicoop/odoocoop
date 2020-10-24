@@ -3,7 +3,7 @@ import { remove } from './accents.js'
 
 export const global = { }
 
-const cancelSource = axios.CancelToken.source()
+let cancelSource
 
 export async function loadConfig () {
   const x = await axios.get('./config.json')
@@ -20,6 +20,7 @@ function url (u) { return global.config.odooproxy + '/' + global.env + '/' + u }
 export async function get (u) {
   try {
     global.App.setInfo('')
+    cancelSource = axios.CancelToken.source()
     const r = await axios.get(url(u), { responseType: 'blob', cancelToken: cancelSource.token })
     global.App.setInfo('Opération OK')
     return blob2b64(r.data)
@@ -28,13 +29,27 @@ export async function get (u) {
   }
 }
 
-export async function post (u, args) {
+/*
+Envoi une requête POST à odooproxy :
+- u est l'URL de la forme "mod/function" qui est la fonction appelée
+- args est un objet avec les arguments qui seront transmis dans le body de la requête
+Retour :
+- OK : l'objet retourné par la fonction demandée
+- KO : un objet ayant une propriété error : {c:..., m:..., d:..., s:...}
+c : code numétique
+m : message textuel
+d : détail (fac)
+s : stack (fac)
+l'erreur a déjà été affichée : le catch dans l'appel sert à différencier la suite du traitement.
+*/
+export async function post (u, args, blob) {
   try {
     global.App.setInfo('')
     if (!args) args = {}
     args.$username = global.App.username || global.config.username
     args.$password = global.App.password || global.config.password
-    const r = await axios.post(url(u), args, { responseType: 'json', cancelToken: cancelSource.token })
+    cancelSource = axios.CancelToken.source()
+    const r = await axios.post(url(u), args, { responseType: blob ? 'blob' : 'json', cancelToken: cancelSource.token })
     global.App.setInfo('Opération OK')
     return r.data
   } catch (e) {
@@ -63,10 +78,12 @@ async function err (e, isPost) {
   throw e
 }
 
-function blob2b64 (blob, asText) {
+export function blob2b64 (blob, asText) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
-    reader.onloadend = function () { resolve(reader.result) }
+    reader.onloadend = function () {
+      resolve(reader.result)
+    }
     reader.onerror = function (e) { reject(e) }
     if (asText) { reader.readAsText(blob) } else { reader.readAsDataURL(blob) }
   })

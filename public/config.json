@@ -1,4 +1,8 @@
 {
     "odooproxy": "https://odooproxy.coquelicoop.fr",
-    "envs": { "p": "Production", "s": "Staging-Test" }
+    "envs": { "p": "Production", "s": "Staging-Test" },
+    "etiquettes": {
+       "avery-1": { "nx": 5, "ny": 16, "h": 12, "g": 14, "dx": 38, "dy": 17, "cbl": 32, "cbh": 10 },
+       "avery-2": { "nx": 5, "ny": 16, "h": 12, "g": 14, "dx": 38, "dy": 17, "cbl": 32, "cbh": 10 }
+    } 
 }
