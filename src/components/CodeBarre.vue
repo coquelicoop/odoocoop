@@ -18,12 +18,16 @@
     </q-input>
     <q-select class="col q-mt-lg" v-model="etiq" :options="etiqs" label="Modèle d'étiquettes" style="width:30rem"/>
     <div class="col q-mt-lg" ><q-btn icon="print" label="IMPRIMER EN PDF" @click="imprimer" /></div>
+    <div style="margin-top:10px"><img :src="img" /></div>
   </div>
 </template>
 
 <script>
 import { global, post, checkEAN13, blob2b64 } from '../app/global.js'
 import { jsPDF } from 'jspdf'
+import JsBarcode from 'jsbarcode'
+
+const jsb = true
 
 export default {
   name: 'CodeBarre',
@@ -32,6 +36,8 @@ export default {
       codebarre: '3254550031046',
       etiq: '',
       etiqs: [],
+      img: null,
+      img2: null,
       fournisseur: 'AAA',
       nom: 'nom du produit',
       erreur: null
@@ -42,8 +48,14 @@ export default {
     for (const e in global.config.etiquettes) t.push(e)
     this.etiqs = t
     this.etiq = this.etiqs[0]
+    this.canvas = document.createElement('canvas')
   },
   methods: {
+    textToBase64Barcode (text) {
+      // JsBarcode(this.canvas, text, { format: 'CODE39' })
+      JsBarcode(this.canvas, this.codebarre, { format: 'EAN13', flat: false, height: 100, width: 3, textMargin: 0, fontOptions: 'bold', fontSize: 32 })
+      return this.canvas.toDataURL('image/jpg')
+    },
     async imprimer () { // 3254550031046
       if (!checkEAN13(this.codebarre)) return
       if (!this.fournisseur || this.fournisseur.length !== 3) {
@@ -58,14 +70,16 @@ export default {
       global.App.opStart()
       const cfg = global.config.etiquettes[this.etiq]
       try {
-        const args = {
-          url: '/report/barcode?type=EAN13&width=' + (cfg.cbl * 4) + '&height=' + (cfg.cbh * 4) + '&value=' + this.codebarre,
-          type: 'jpg'
+        if (!jsb) {
+          const args = {
+            url: '/report/barcode?type=EAN13&width=' + (cfg.cbl * 4) + '&height=' + (cfg.cbh * 4) + '&value=' + this.codebarre,
+            type: 'jpg'
+          }
+          const res = await post('m1/get_url', args, true)
+          this.img = await blob2b64(res)
+        } else {
+          this.img = this.textToBase64Barcode(this.codebarre)
         }
-        // eslint-disable-next-line
-        const res = await post('m1/get_url', args, true)
-        this.img = await blob2b64(res)
-
         // eslint-disable-next-line
         const doc = new jsPDF()
         doc.setFont('fixed')
@@ -77,8 +91,10 @@ export default {
             const y1 = cfg.h + (j * cfg.dy) + 2
             const x2 = x1 + 5
             const y2 = y1 + cfg.cbh + 3
-            doc.addImage(this.img, 'JPEG', x1, y1, cfg.cbl, cfg.cbh, 'IMG1', 'NONE', 0)
-            doc.text(this.codebarre, x2, y2)
+            doc.addImage(this.img, 'JPEG', x1, y1, cfg.cbl, jsb ? cfg.dy - 2 : cfg.cbh, 'IMG1', 'NONE', 0)
+            if (!jsb) {
+              doc.text(this.codebarre, x2, y2)
+            }
           }
         }
 
@@ -88,7 +104,9 @@ export default {
         const blob = doc.output('blob')
         const url = URL.createObjectURL(blob)
         window.open(url)
-      } catch (e) { }
+      } catch (e) {
+        console.log(e.message)
+      }
       global.App.opComplete()
     }
   }
