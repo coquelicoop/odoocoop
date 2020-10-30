@@ -1,46 +1,92 @@
 <template>
-  <div style="margin-top:3rem;" class="column items-center">
-    <div class="col text-h4">Impression d'une planche de codes barres</div>
-    <q-input class="col q-mt-lg" bottom-slots v-model="codebarre" label="Code barre" counter maxlength="13" style="width:30rem">
-        <template v-slot:hint>
-        13 chiffres
-        </template>
-    </q-input>
-    <q-input class="col q-mt-lg" bottom-slots v-model="fournisseur" label="Code fournisseur à 3 lettres" counter maxlength="3" style="width:30rem">
-        <template v-slot:hint>
-        3 lettres
-        </template>
-    </q-input>
-    <q-input class="col q-mt-lg" bottom-slots v-model="nom" label="Nom du produit" counter maxlength="30" style="width:30rem">
-        <template v-slot:hint>
-        de 3 à 30 lettres ou chiffres
-        </template>
-    </q-input>
-    <q-select class="col q-mt-lg" v-model="etiq" :options="etiqs" label="Modèle d'étiquettes" style="width:30rem"/>
-    <div class="col q-mt-lg" ><q-btn icon="print" label="IMPRIMER EN PDF" @click="imprimer" /></div>
-    <div style="margin-top:10px"><img :src="img" /></div>
+<div style="margin:1rem;">
+  <div class="text-h4">A propos d'un article</div>
+  <input-barcode class="q-ma-md" show v-on:cb-change="cbchange" ></input-barcode>
+  <div class="q-ma-md">
+    <q-btn icon="print" label="Planche de code-barre" @click="imprcbouvert = true" :disable="codebarre == '' || article === null" />
   </div>
+  <div  class="q-ma-md" v-if="article !== null">
+    <div class="text-h4">{{ titre }}</div>
+    <div v-if="image !== null" class="img bg-grey-2"><img class="img" :src="image"/></div>
+    <div v-else class="text-h6">Pas d'image</div>
+    <div v-for="a in article" :key="a.c" class="row">
+      <div style="width:15rem">{{ a.c }}</div>
+      <div :class="'col' + (a.b ? ' text-weight-bolder' : '')">{{ a.v }}</div>
+    </div>
+  </div>
+  <div class="text-h4" v-if="article == null && !chargt && codebarre">Pas d'article avec ce code-bare</div>
+  <div class="text-h5 text-italic" v-if="chargt">Recherche en cours ...e</div>
+
+  <q-dialog v-model="imprcbouvert">
+    <q-card>
+      <q-card-section>
+        <div class="text-h4">Options d'impression pour l'imprimante : "recto" et "100%"</div>
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn flat label="Annuler" color="negative" v-close-popup />
+        <q-btn flat icon="print" label="IMPRIMER EN PDF" @click="imprimer" color="primary" v-close-popup />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
+</div>
 </template>
 
 <script>
-import { global, post, checkEAN13, blob2b64 } from '../app/global.js'
+import { global, post, codeCourtDeId } from '../app/global.js'
+import InputBarcode from './InputBarcode.vue'
 import { jsPDF } from 'jspdf'
-import JsBarcode from 'jsbarcode'
 
-const jsb = true
+function dec (v, n) {
+  v = '' + v
+  const i = v.lastIndexOf('.')
+  if (i === -1) return v
+  const e = v.substring(0, i + 1)
+  const d = v.substring(i + 1) + '00000000'
+  return e + d.substring(0, n)
+}
+
+const champs = [
+  { n: 'nom', c: 'display_name' },
+  { n: 'fournisseur', c: 'default_seller_id', f: 'fourn' },
+  { n: 'catégorie', c: 'categ_id', f: 'id' },
+  { n: 'identifiant', c: 'id' },
+  { n: 'actif', c: 'active', f: 'bool' },
+  { n: 'peut être acheté', c: 'purchase_ok', f: 'bool' },
+  { n: 'peut être vendu', c: 'sale_ok', f: 'bool' },
+  { n: 'disponible dans le PDV', c: 'available_in_pos', f: 'bool' },
+  { n: 'unité ou kg', c: 'uom_name' },
+  { n: 'à peser', c: 'to_weight', f: 'court' },
+  { n: 'prix d\'achat HT', c: 'base_price', f: 'd4' },
+  { n: 'prix de vente', c: 'list_price', f: 'd2' },
+  { n: 'tva', c: 'fiscal_classification_id', f: 'id' },
+  { n: 'colisage', c: 'default_packaging' },
+  { n: 'quantité disponible', c: 'qty_available' },
+  { n: 'valeur du stock', c: 'stock_value', f: 'd2' },
+  { n: 'conso. moyenne', c: 'average_consumption', f: 'd4' },
+  { n: 'producteur', c: 'pricetag_origin' },
+  { n: 'volume en L', c: 'volume' },
+  { n: 'poids en Kg', c: 'weight' },
+  { n: 'date de création', c: 'create_date' },
+  { n: 'date d\'écriture', c: 'write_date' }
+]
 
 export default {
   name: 'CodeBarre',
+  components: { InputBarcode },
   data () {
     return {
-      codebarre: '3254550031046',
+      imprcbouvert: false,
+      codebarre: '',
       etiq: '',
       etiqs: [],
-      img: null,
-      img2: null,
-      fournisseur: 'AAA',
-      nom: 'nom du produit',
-      erreur: null
+      fournisseur: '',
+      nom: '',
+      image: null,
+      erreur: null,
+      titre: '',
+      chargt: false,
+      article: null
     }
   },
   mounted () {
@@ -48,38 +94,22 @@ export default {
     for (const e in global.config.etiquettes) t.push(e)
     this.etiqs = t
     this.etiq = this.etiqs[0]
-    this.canvas = document.createElement('canvas')
   },
   methods: {
-    textToBase64Barcode (text) {
-      // JsBarcode(this.canvas, text, { format: 'CODE39' })
-      JsBarcode(this.canvas, this.codebarre, { format: 'EAN13', flat: false, height: 100, width: 3, textMargin: 0, fontOptions: 'bold', fontSize: 32 })
-      return this.canvas.toDataURL('image/jpg')
+    async cbchange (event) {
+      if (event.err) {
+        this.codebarre = ''
+        this.article = null
+      } else {
+        this.codebarre = event.codebarre
+        this.codebarreURL = event.dataURL
+        await this.getArticle()
+      }
     },
-    async imprimer () { // 3254550031046
-      if (!checkEAN13(this.codebarre)) return
-      if (!this.fournisseur || this.fournisseur.length !== 3) {
-        global.App.displayErreur({ majeur: 'Erreur de syntaxe', code: 0, message: 'Un code fournisseur doit avoir 3 lettres' })
-        return
-      }
-      if (!this.nom || this.nom.length < 3 || this.nom.length > 30) {
-        global.App.displayErreur({ majeur: 'Erreur de syntaxe', code: 0, message: 'Un nom de produit doit avoir entre 3 et 30 signes' })
-        return
-      }
-
+    async imprimer () {
       global.App.opStart()
       const cfg = global.config.etiquettes[this.etiq]
       try {
-        if (!jsb) {
-          const args = {
-            url: '/report/barcode?type=EAN13&width=' + (cfg.cbl * 4) + '&height=' + (cfg.cbh * 4) + '&value=' + this.codebarre,
-            type: 'jpg'
-          }
-          const res = await post('m1/get_url', args, true)
-          this.img = await blob2b64(res)
-        } else {
-          this.img = this.textToBase64Barcode(this.codebarre)
-        }
         // eslint-disable-next-line
         const doc = new jsPDF()
         doc.setFont('fixed')
@@ -89,16 +119,11 @@ export default {
           for (let j = 0; j < cfg.ny; j++) {
             const x1 = cfg.g + (i * cfg.dx) - 2
             const y1 = cfg.h + (j * cfg.dy) + 2
-            const x2 = x1 + 5
-            const y2 = y1 + cfg.cbh + 3
-            doc.addImage(this.img, 'JPEG', x1, y1, cfg.cbl, jsb ? cfg.dy - 2 : cfg.cbh, 'IMG1', 'NONE', 0)
-            if (!jsb) {
-              doc.text(this.codebarre, x2, y2)
-            }
+            doc.addImage(this.codebarreURL, 'JPEG', x1, y1, cfg.cbl, cfg.dy - 2, 'IMG1', 'NONE', 0)
           }
         }
 
-        const label = this.fournisseur + ' - ' + this.codebarre + ' - ' + this.nom
+        const label = this.fourn + ' - ' + this.codebarre + ' - ' + this.nom
         doc.text(label, cfg.g, 290)
 
         const blob = doc.output('blob')
@@ -108,6 +133,74 @@ export default {
         console.log(e.message)
       }
       global.App.opComplete()
+    },
+    async getArticle () {
+      global.App.opStart()
+      this.chargt = true
+      try {
+        const params = { // paramètres requis pour le search_read de articles à peser
+          ids: [],
+          domain: [['barcode', '=', this.codebarre]],
+          // fields: fields, // omettre cette ligne pour avoir TOUS les champs
+          order: '',
+          limit: 9999,
+          offset: 0
+        }
+        const articles = await post('m1/search_read', { model: 'product.product', params: params, timeout: 10000 })
+        console.log(JSON.stringify(articles))
+        const x = []
+        if (articles.length) {
+          const a = articles[0]
+          for (let i = 0; i < champs.length; i++) {
+            const y = champs[i]
+            const ved = y.f ? this.edit(a[y.c], y.f, a) : a[y.c]
+            x.push({ c: y.n, v: ved, b: true })
+          }
+          x.push({ c: '_________________________', v: '_________________________' })
+          x.push({ c: 'Toutes les propriétés', v: '' })
+          const x2 = []
+          for (const c in a) {
+            x2.push({ c: c, v: a[c] })
+          }
+          x2.sort((a, b) => a.c < b.c ? -1 : (a.c === b.c ? 0 : 1))
+          this.article = x.concat(x2)
+          this.nom = a.display_name
+          this.image = a.image ? 'data:image/jpg;base64,' + a.image : null
+          this.titre = this.fournisseur + ' - ' + this.nom +
+           (a.sale_ok && a.available_in_pos ? ' - passe en caisse' : 'NE passe PAS en caisse') +
+           (a.to_weight ? ' - à peser [' + a.codecourt + ']' : '')
+        } else {
+          this.article = null
+        }
+      } catch (e) { }
+      this.chargt = false
+      global.App.opComplete()
+    },
+    edit (v, f, a) {
+      switch (f) {
+        case 'bool': {
+          return v ? 'oui' : 'non'
+        }
+        case 'id': {
+          return v[1]
+        }
+        case 'fourn': {
+          this.fournisseur = v[1].substring(0, 3)
+          return v[1]
+        }
+        case 'd2' : {
+          return dec(v, 2)
+        }
+        case 'd4' : {
+          return dec(v, 4)
+        }
+        case 'court' : {
+          if (!v) return 'non'
+          a.codecourt = codeCourtDeId(a.id, a.display_name)
+          return 'oui - [' + a.codecourt + ']'
+        }
+      }
+      return v
     }
   }
 }
@@ -115,5 +208,7 @@ export default {
 
 <style lang="sass">
 @import '../css/app.sass'
-
+.img
+  width: 128px
+  height: 128px
 </style>
