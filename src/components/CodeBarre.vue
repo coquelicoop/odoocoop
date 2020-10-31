@@ -20,7 +20,8 @@
   <q-dialog v-model="imprcbouvert">
     <q-card>
       <q-card-section>
-        <div class="text-h4">Options d'impression pour l'imprimante : "recto" et "100%"</div>
+        <div class="text-h5">Options d'impression pour l'imprimante : "recto", "100%", les étiquettes décollables sur la face vers le bas dans le tiroir de l'imprimante</div>
+        <q-select class="col q-mt-lg" v-model="etiq" :options="etiqs" label="Modèle d'étiquettes" style="width:10rem"/>
       </q-card-section>
       <q-card-actions align="right">
         <q-btn flat label="Annuler" color="negative" v-close-popup />
