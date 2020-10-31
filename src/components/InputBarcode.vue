@@ -5,10 +5,10 @@
       <q-input class="col" ref="input" bottom-slots v-model="codebarre" clearable
           clear-icon="close" label="Code barre" counter :maxlength="nbch"
           :rules="[ val => checkcb(val) ]"
-          style="min-width:25rem;">
+          style="min-width:25rem;max-width:30rem">
       </q-input>
     </div>
-    <img v-if="show" class="col bg-grey-2" style="width:16rem" :src="img" />
+    <img v-if="show" class="col bg-grey-2" style="max-width:16rem" :src="img" />
   </div>
 </template>
 
