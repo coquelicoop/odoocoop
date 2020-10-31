@@ -1,13 +1,13 @@
 <template>
-  <div class="row items-center bg-white" style="width:30rem;min-width:25rem;padding:0.5rem">
+  <div class="row items-center bg-white" style="padding:0.5rem">
     <div class="col column q-mr-md" >
+      <q-checkbox class="col" style="width:12rem" v-model="aupoids" label="Au poids" />
       <q-input class="col" ref="input" bottom-slots v-model="codebarre" clearable
           clear-icon="close" label="Code barre" counter :maxlength="nbch"
           :rules="[ val => checkcb(val) ]"
-          style="width:15rem">
+          style="min-width:25rem;">
       </q-input>
-      <q-checkbox class="col" style="width:10rem" v-model="aupoids" label="Au poids" />
-     </div>
+    </div>
     <img v-if="show" class="col bg-grey-2" style="width:16rem" :src="img" />
   </div>
 </template>
@@ -91,7 +91,7 @@ export default {
         this.$emit('cb-change', { codebarre: cb, dataURL: u })
       } else {
         this.img = ''
-        this.$emit('cb-change', { err: er })
+        this.$emit('cb-change', { err: er, codebarre: val })
       }
     },
     checkcb (s) {
