@@ -10,6 +10,7 @@
           <q-tab name="accueil" label="Accueil" />
           <q-tab name="apeser" label="Articles à peser" icon="img:tomate.png"/>
           <q-tab name="codebarre" label="Code barre" />
+          <q-tab name="po" label="PO" />
         </q-tabs>
       </q-toolbar>
       <tool-bar-articles v-if="tab == 'apeser'"></tool-bar-articles>
@@ -40,6 +41,7 @@
       <div v-if="tab === 'accueil'"><vue-accueil></vue-accueil></div>
       <div v-if="tab === 'codebarre'"><code-barre></code-barre></div>
       <div v-if="tab === 'apeser'"><liste-articles></liste-articles></div>
+      <div v-if="tab === 'po'"><purchase-order></purchase-order></div>
     </q-page-container>
 
     <q-dialog v-model="loginOuvert" persistent transition-show="flip-down" transition-hide="flip-up">
@@ -72,6 +74,7 @@
             <div class="text-weight-bold">J'annule ma demande</div>
           </div>
           <q-space />
+          <q-spinner color="primary" size="3em" :thickness="2" />
           <q-btn flat round icon="close" @click="clicAbort" />
         </q-card-section>
       </q-card>
@@ -110,10 +113,11 @@ import ListeArticles from './components/ListeArticles.vue'
 import ToolBarArticles from './components/ToolBarArticles.vue'
 import CodeBarre from './components/CodeBarre.vue'
 import VueAccueil from './components/VueAccueil.vue'
+import PurchaseOrder from './components/PurchaseOrder.vue'
 
 export default {
   name: 'App',
-  components: { ToolBarArticles, ListeArticles, CodeBarre, VueAccueil },
+  components: { ToolBarArticles, ListeArticles, CodeBarre, VueAccueil, PurchaseOrder },
   data () {
     return {
       version: version,
