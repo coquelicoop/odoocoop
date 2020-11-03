@@ -196,6 +196,12 @@ export function dateHeure () {
   return d.getFullYear() + '-' + e2(d.getMonth() + 1) + '-' + e2(d.getDate()) + '_' + e2(d.getHours()) + e2(d.getMinutes()) + e2(d.getSeconds())
 }
 
+export function dec (v, n) {
+  let x = '' + Math.round(v * [1, 10, 100, 1000, 10000, 100000][n])
+  if (x.length <= n) x = '000000'.substring(0, n - x.length + 1) + x
+  return x.substring(0, x.length - n) + ',' + x.substring(x.length - n)
+}
+
 /* Formate un prix donné par un entier en centimes en euro : 3.61 0.45 */
 export function formatPrix (p) {
   if (!p || p < 0) { return '0.00' }

@@ -19,15 +19,17 @@
       </div>
       <div :class="'col' + (a.b ? ' text-weight-bolder' : '')">{{ a.v }}</div>
     </div>
-    <q-toggle v-model="voirtoutes" label="Toutes les propriétés" />
-    <div v-if="voirtoutes">
-      <div v-for="a in props2" :key="a.c" class="row">
-        <div class="champ">{{ a.c }}
-          <q-tooltip>{{ a.c }}</q-tooltip>
-        </div>
-        <div :class="'col' + (a.b ? ' text-weight-bolder' : '')">{{ a.v }}</div>
+
+    <div class="text-h5 text-italic">Toutes les propriétés</div>
+    <q-scroll-area class="qsa q-mt-sm q-pa-sm">
+    <div v-for="a in props2" :key="a.c" class="row">
+      <div class="champ">{{ a.c }}
+        <q-tooltip>{{ a.c }}</q-tooltip>
       </div>
+      <div :class="'col' + (a.b ? ' text-weight-bolder' : '')">{{ a.v }}</div>
     </div>
+    </q-scroll-area>
+
     <div class="row q-my-md items-center">
       <q-input class="q-mr-lg" v-model="filtre" bottom-slots style="width:15em" dense label="Filtre sur nom" >
         <template v-slot:hint>
@@ -45,7 +47,7 @@
       hide-pagination>
       <template v-slot:body-cell-nom="props">
         <q-td :props="props">
-          <div @click="clicLigne(props.row)" class="cursor-pointer">{{ props.row.nom }}
+          <div @click="clicLigne(props.row)" class="cursor-pointer my-table-details">{{ props.row.nom }}
             <q-tooltip>{{ props.row.dates }}</q-tooltip>
           </div>
         </q-td>
@@ -58,7 +60,25 @@
         </q-td>
       </template>
      </q-table>
+     <q-space />
   </div>
+
+  <q-dialog v-model="voirArticle" full-width>
+    <q-layout view="Lhh lpR fff" container class="bg-white">
+      <q-header class="bg-primary">
+        <q-toolbar>
+          <q-toolbar-title>{{ nom }}</q-toolbar-title>
+          <q-btn flat v-close-popup round dense icon="close" />
+        </q-toolbar>
+      </q-header>
+
+      <q-page-container>
+        <q-page padding>
+          <fiche-article :mon-article="article"></fiche-article>
+        </q-page>
+      </q-page-container>
+    </q-layout>
+  </q-dialog>
 
 </div>
 </template>
@@ -66,6 +86,7 @@
 <script>
 import { global, post } from '../app/global.js'
 import { remove } from '../app/accents.js'
+import FicheArticle from './FicheArticle.vue'
 
 // eslint-disable-next-line
 const champsPO = ['id', 'name', 'origin', 'partner_ref', 'date_order', 'date_approve', 'partner_id', 'dest_address_id', 'currency_id', 'state', 'order_line', 'notes', 'invoice_count', 'invoice_ids', 'invoice_status', 'amount_untaxed', 'amount_tax', 'amount_total', 'fiscal_position_id', 'payment_term_id', 'user_id', 'company_id', 'incoterm_id', 'picking_count', 'picking_ids', 'picking_type_id', 'group_id', 'date_planned', 'activity_ids', 'message_follower_ids', 'message_ids', 'message_main_attachment_id', 'website_message_ids', 'access_token', 'create_uid', 'create_date', 'write_uid', 'write_date', 'product_id', 'default_location_dest_id_usage', 'is_shipped', 'activity_state', 'activity_user_id', 'activity_type_id', 'activity_date_deadline', 'activity_summary', 'message_is_follower', 'message_partner_ids', 'message_channel_ids', 'message_unread', 'message_unread_counter', 'message_needaction', 'message_needaction_counter', 'message_has_error', 'message_has_error_counter', 'message_attachment_count', 'access_url', 'access_warning', 'display_name', '__last_update']
@@ -89,6 +110,9 @@ const columns = [
     label: 'nom',
     align: 'left',
     field: 'nom',
+    classes: 'bg-grey-2 ellipsis',
+    style: 'max-width: 180px',
+    headerClasses: 'bg-primary text-white',
     sortable: true,
     sort: (a, b, rowA, rowB) => rowA.nom < rowB.nom ? 1 : (rowA.nom === rowB.nom ? 0 : -1)
   },
@@ -118,7 +142,9 @@ function dec (v, n) {
 
 export default {
   name: 'PurchaseOrder',
-  components: { },
+
+  components: { FicheArticle },
+
   data () {
     return {
       po: '',
@@ -134,13 +160,19 @@ export default {
       columns: columns,
       pagination: { rowsPerPage: 500 },
       filtre: '',
-      article: null
+      article: null,
+      fournisseur: '',
+      nom: '',
+      voirArticle: false
     }
   },
+
   mounted () {
   },
+
   computed: {
   },
+
   watch: {
     filtre (val) {
       if (!val) {
@@ -155,29 +187,33 @@ export default {
       this.data2 = x
     }
   },
+
   methods: {
     async clicLigne (l) {
-      console.log(l.idx + ' ' + l.nom)
-      await this.getArticle(l.product_id[0])
-      // this.logfields(this.article, 'champsPR')
+      this.nom = l.nom
+      // console.log(l.idx + ' ' + l.nom)
+      this.voirArticle = true
+      setTimeout(async () => {
+        await this.getArticle(l.product_id[0])
+        // this.logfields(this.article, 'champsPR')
+      }, 10)
     },
-    dec (v, n) {
-      let x = '' + Math.round(v * [1, 10, 100, 1000, 10000, 100000][n])
-      if (x.length <= n) x = '000000'.substring(0, n - x.length + 1) + x
-      return x.substring(0, x.length - n) + ',' + x.substring(x.length - n)
-    },
+
     taxe_achat (id) {
       const n = id && id.length > 0 ? id[0] : 0
       return global.config.taxe_achat && global.config.taxe_achat[n] ? global.config.taxe_achat[n] : 0
     },
+
     uom (x) {
       return x && x.length === 2 && x[1] === 'kg' ? 'kg' : 'U'
     },
+
     logfields (o, n) {
       const x = []
       for (const f in o) x.push('\'' + f + '\'')
       console.log('const ' + n + ' = [' + x.join(', ') + ']')
     },
+
     async getArticle (a) {
       const params = {
         ids: [a],
@@ -192,9 +228,10 @@ export default {
       console.log('nb de lignes : ' + lst.length)
       if (lst[0]) {
         this.article = lst[0]
-        console.log(JSON.stringify(this.article))
+        // console.log(JSON.stringify(this.article))
       }
     },
+
     async recherche () {
       this.chargt = true
       global.App.opStart()
@@ -230,21 +267,22 @@ export default {
       this.chargt = false
       global.App.opComplete()
     },
-    affichePO (a) {
-      const e = this.entete
+
+    affichePO (e) {
       this.titre = e.display_name + ' (' + e.state + ' ) - ' + this.edit(e.partner_id, 'fourn')
       this.props = []
       for (let i = 0; i < champs.length; i++) {
         const y = champs[i]
-        const ved = y.f ? this.edit(a[y.c], y.f, a) : a[y.c]
+        const ved = y.f ? this.edit(e[y.c], y.f, e) : e[y.c]
         this.props.push({ c: y.n, v: ved, b: true })
       }
       this.props2 = []
-      for (const c in a) {
-        this.props2.push({ c: c, v: a[c] })
+      for (const c in e) {
+        this.props2.push({ c: c, v: e[c] })
       }
       this.props2.sort((a, b) => a.c < b.c ? -1 : (a.c === b.c ? 0 : 1))
     },
+
     async getLignes (l) {
       const params = {
         ids: l,
@@ -286,6 +324,7 @@ export default {
       }
       // console.log(JSON.stringify(this.lignes))
     },
+
     edit (v, f, a) {
       switch (f) {
         case 'bool': {
@@ -295,20 +334,20 @@ export default {
           return v[1]
         }
         case 'montant': {
-          return this.dec(a.amount_untaxed, 2) + '€ + ' + this.dec(a.amount_tax, 2) + '€ = ' + this.dec(a.amount_total, 2) + '€'
+          return dec(a.amount_untaxed, 2) + '€ + ' + dec(a.amount_tax, 2) + '€ = ' + dec(a.amount_total, 2) + '€'
         }
         case 'montantr': {
-          return !a.aremises ? '' : (this.dec(a.amount_untaxed_r, 2) + '€ + ' + this.dec(a.amount_tax_r, 2) + '€ = ' + this.dec(a.amount_total_r, 2) + '€')
+          return !a.aremises ? '' : (dec(a.amount_untaxed_r, 2) + '€ + ' + dec(a.amount_tax_r, 2) + '€ = ' + dec(a.amount_total_r, 2) + '€')
         }
         case 'fourn': {
           this.fournisseur = v[1].substring(0, 3)
           return v[1]
         }
         case 'd2' : {
-          return this.dec(v, 2)
+          return dec(v, 2)
         }
         case 'd4' : {
-          return this.dec(v, 4)
+          return dec(v, 4)
         }
         case 'lignes' : {
           this.lignes = v
@@ -338,6 +377,21 @@ export default {
   overflow: hidden
   text-overflow: ellipsis
 
+.qsa
+  height: 80px
+  border: 2px solid $grey-6
+  color: $indigo-8
+
+.my-table-details
+  font-size: 1.1em
+  font-style: italic
+  min-width: 180px
+  max-width: 300px
+  white-space: normal
+  paddin-left: 3px
+  color: $indigo-8
+  font-weight: bold
+
 .my-sticky-header-column-table
   /* height or max-height is important */
   height: 310px
@@ -348,7 +402,7 @@ export default {
 
   td:first-child
     /* bg color is important for td; just specify one */
-    background-color: #c1f4cd !important
+    background-color: $grey-2 !important
 
   tr th
     position: sticky

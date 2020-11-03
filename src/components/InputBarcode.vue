@@ -1,14 +1,13 @@
 <template>
-  <div class="row items-center bg-white" style="padding:0.5rem">
-    <div class="col column q-mr-md" >
+  <div class="row justify-start items-center bg-white" style="padding:0.5rem;max-width:40rem;">
+    <div class="col column q-mr-md" style="min-width:18rem;max-width:20rem">
       <q-checkbox class="col" style="width:12rem" v-model="aupoids" label="Au poids" />
       <q-input class="col" ref="input" bottom-slots v-model="codebarre" clearable
           clear-icon="close" label="Code barre" counter :maxlength="nbch"
-          :rules="[ val => checkcb(val) ]"
-          style="min-width:25rem;max-width:30rem">
+          :rules="[ val => checkcb(val) ]">
       </q-input>
     </div>
-    <img v-if="show" class="col bg-grey-2" style="max-width:16rem" :src="img" />
+    <img v-if="show" class="col bg-grey-2" style="min-width:12rem;max-width:16rem" :src="img" />
   </div>
 </template>
 
