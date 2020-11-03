@@ -1,13 +1,13 @@
 <template>
 <div style="margin:1rem;">
   <div class="text-h4">A propos d'un article</div>
-  <input-barcode show v-on:cb-change="cbchange" ></input-barcode>
+  <input-barcode ref="inpcb" show v-on:cb-change="cbchange" ></input-barcode>
   <div class="row justify-start items-center q-mt-lg">
     <q-select  v-model="option" :options="optionsrecherche" label="Options de recherche" style="width:20rem"/>
     <q-btn v-if="optionsrecherche[0] !== option" round color="primary" icon="search" @click="recherche" :disable="codebarre == ''" />
   </div>
   <div class="q-my-md">
-    <q-btn icon="print" label="Planche de code-barre" @click="imprcbouvert = true" :disable="codebarre == '' || article === null" />
+    <q-btn icon="print" label="Planche de code-barre" @click="imprcbouvert = true" :disable="!codebarreURL && !article" />
   </div>
   <div class="q-my-md row items-center" v-if="liste && liste.length > 1">
     <q-btn icon="skip_previous" size="sm" label="Précédent" @click="suivprec(-1)" :disable="courant === 0" />
@@ -88,6 +88,7 @@ export default {
       optionsrecherche: optionsrecherche,
       option: optionsrecherche[0],
       codebarre: '',
+      codebarreURL: null,
       etiq: '',
       etiqs: [],
       erreur: null,
@@ -131,6 +132,12 @@ export default {
     async imprimer () {
       global.App.opStart()
       const cfg = global.config.etiquettes[this.etiq]
+      let u
+      if (this.article && this.article.barcode === this.codebarre) {
+        u = this.codebarreURL
+      } else {
+        u = this.$refs.inpcb.toBase64Barcode(this.article.barcode)
+      }
       try {
         // eslint-disable-next-line
         const doc = new jsPDF()
@@ -141,7 +148,7 @@ export default {
           for (let j = 0; j < cfg.ny; j++) {
             const x1 = cfg.g + (i * cfg.dx) - 2
             const y1 = cfg.h + (j * cfg.dy) + 2
-            doc.addImage(this.codebarreURL, 'JPEG', x1, y1, cfg.cbl, cfg.dy - 2, 'IMG1', 'NONE', 0)
+            doc.addImage(u, 'JPEG', x1, y1, cfg.cbl, cfg.dy - 2, 'IMG1', 'NONE', 0)
           }
         }
 
