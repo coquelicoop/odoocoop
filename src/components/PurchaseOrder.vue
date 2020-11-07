@@ -20,16 +20,6 @@
       <div :class="'col' + (a.b ? ' text-weight-bolder' : '')">{{ a.v }}</div>
     </div>
 
-    <div class="text-h5 text-italic">Toutes les propriétés</div>
-    <q-scroll-area class="qsa q-mt-sm q-pa-sm">
-    <div v-for="a in props2" :key="a.c" class="row">
-      <div class="champ">{{ a.c }}
-        <q-tooltip>{{ a.c }}</q-tooltip>
-      </div>
-      <div :class="'col' + (a.b ? ' text-weight-bolder' : '')">{{ a.v }}</div>
-    </div>
-    </q-scroll-area>
-
     <div class="row q-my-md items-center">
       <q-input class="q-mr-lg" v-model="filtre" bottom-slots style="width:15em" dense label="Filtre sur nom" >
         <template v-slot:hint>
@@ -61,6 +51,18 @@
       </template>
      </q-table>
      <q-space />
+  </div>
+
+  <div v-if="!chargt && entete != null">
+    <q-toggle v-model="voirtoutes" class="text-h5 text-italic" left-label :label="voirtoutes ? 'Cacher les propriétés détailles' : 'Voir les propriétés détailles'"/>
+    <q-scroll-area v-if="voirtoutes" class="qsa q-mt-sm q-pa-sm">
+      <div v-for="a in props2" :key="a.c" class="row">
+        <div class="champ">{{ a.c }}
+          <q-tooltip>{{ a.c }}</q-tooltip>
+        </div>
+        <div :class="'col' + (a.b ? ' text-weight-bolder' : '')">{{ a.v }}</div>
+      </div>
+    </q-scroll-area>
   </div>
 
   <q-dialog v-model="voirArticle" full-width>
@@ -107,6 +109,7 @@ const champs = [
 const columns = [
   {
     name: 'nom',
+    voirtoutes: false,
     label: 'nom',
     align: 'left',
     field: 'nom',
@@ -376,11 +379,6 @@ export default {
   width: 16rem
   overflow: hidden
   text-overflow: ellipsis
-
-.qsa
-  height: 80px
-  border: 2px solid $grey-6
-  color: $indigo-8
 
 .my-table-details
   font-size: 1.1em

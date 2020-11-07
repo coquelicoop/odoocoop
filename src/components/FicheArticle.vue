@@ -8,8 +8,9 @@
       </div>
       <div :class="'col' + (a.b ? ' text-weight-bolder' : '')">{{ a.v }}</div>
     </div>
-    <div class="text-h5 text-italic q-mt-lg">Toutes les propriétés</div>
-    <q-scroll-area class="qsa q-mt-lg q-pa-md">
+
+    <q-toggle v-model="voirtoutes" class="text-h5 text-italic" left-label :label="voirtoutes ? 'Cacher les propriétés détailles' : 'Voir les propriétés détailles'"/>
+    <q-scroll-area v-if="voirtoutes" class="qsa q-mt-lg q-pa-md">
     <div v-for="a in tousAttributs" :key="a.c" class="row">
       <div class="champ">{{ a.c }}
         <q-tooltip>{{ a.c }}</q-tooltip>
@@ -72,6 +73,7 @@ export default {
   data () {
     return {
       ok: false,
+      voirtoutes: false,
       attributs: [],
       tousAttributs: [],
       fournisseur: '',
@@ -105,7 +107,7 @@ export default {
       this.attributs = x
       const x2 = []
       for (const c in a) {
-        x2.push({ c: c, v: a[c] })
+        x2.push({ c: c, v: ('' + a[c]).substring(0, 80) })
       }
       x2.sort((a, b) => a.c < b.c ? -1 : (a.c === b.c ? 0 : 1))
       this.tousAttributs = x2
@@ -133,7 +135,7 @@ export default {
   text-overflow: ellipsis
 
 .qsa
-    height: 150px
+    height: 250px
     border: 2px solid $grey-6
     color: $indigo-8
 
