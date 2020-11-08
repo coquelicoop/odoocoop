@@ -1,13 +1,14 @@
 <template>
-  <div class="row justify-start items-center bg-white" style="padding:0.5rem;max-width:40rem;">
-    <div class="col column q-mr-md" style="min-width:18rem;max-width:20rem">
+  <div class="row items-center bg-white" style="padding:0.5rem; max-width:50rem;">
+    <div class="col column q-mr-md" >
       <q-checkbox class="col" style="width:12rem" v-model="aupoids" label="Au poids" />
-      <q-input class="col" ref="input" bottom-slots v-model="codebarre" clearable
-          clear-icon="close" label="Code barre" counter :maxlength="nbch"
-          :rules="[ val => checkcb(val) ]">
+      <q-input class="col" ref="input" bottom-slots v-model="codebarre" clearable mask='####### ##### #'
+          clear-icon="close" label="Code barre" counter
+          :rules="[ val => checkcb(val.trim().replace(/\s/g, '')) ]"
+          style="min-width:15rem;">
       </q-input>
     </div>
-    <img v-if="show" class="col bg-grey-2" style="min-width:12rem;max-width:16rem" :src="img" />
+    <img v-if="show" class="col bg-grey-2" style="width:16rem" :src="img" />
   </div>
 </template>
 
@@ -77,11 +78,11 @@ export default {
   },
   methods: {
     change (val) {
-      const er = this.checkcb(val)
+      let cb = val.trim().replace(/\s/g, '')
+      const er = this.checkcb(cb)
       if (!er) {
-        let cb = val
         if (this.aupoids) {
-          const cx = cleEAN(val + '000000')
+          const cx = cleEAN(cb + '000000')
           cb += '00000' + cx
         }
         setTimeout(() => { this.$refs.input.resetValidation() }, 5)
@@ -90,7 +91,7 @@ export default {
         this.$emit('cb-change', { codebarre: cb, dataURL: u })
       } else {
         this.img = ''
-        this.$emit('cb-change', { err: er, codebarre: val })
+        this.$emit('cb-change', { err: er, codebarre: cb })
       }
     },
     checkcb (s) {

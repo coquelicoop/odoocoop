@@ -55,8 +55,13 @@
 
   <div v-if="!chargt && entete != null">
     <q-toggle v-model="voirtoutes" class="text-h5 text-italic" left-label :label="voirtoutes ? 'Cacher les propriétés détailles' : 'Voir les propriétés détailles'"/>
+    <q-input v-if="voirtoutes" class="q-mr-lg" v-model="filtre2" bottom-slots style="width:15em" dense label="Filtre sur le nom de propriété" >
+      <template v-slot:hint>
+        quelques lettres
+      </template>
+    </q-input>
     <q-scroll-area v-if="voirtoutes" class="qsa q-mt-sm q-pa-sm">
-      <div v-for="a in props2" :key="a.c" class="row">
+      <div v-for="a in props3" :key="a.c" class="row">
         <div class="champ">{{ a.c }}
           <q-tooltip>{{ a.c }}</q-tooltip>
         </div>
@@ -154,6 +159,7 @@ export default {
       titre: '',
       props: [],
       props2: [],
+      props3: [],
       entete: null,
       voirtoutes: false,
       chargt: false,
@@ -163,6 +169,7 @@ export default {
       columns: columns,
       pagination: { rowsPerPage: 500 },
       filtre: '',
+      filtre2: '',
       article: null,
       fournisseur: '',
       nom: '',
@@ -177,9 +184,22 @@ export default {
   },
 
   watch: {
+    filtre2 (val) {
+      if (!val) {
+        this.props3 = this.props2
+        return
+      }
+      const x = []
+      for (let i = 0; i < this.props2.length; i++) {
+        const a = this.props2[i]
+        if (a.c.indexOf(val) !== -1) x.push(a)
+      }
+      this.props3 = x
+    },
     filtre (val) {
       if (!val) {
-        this.data2 = this.data1return
+        this.data2 = this.data1
+        return
       }
       const s = remove(val).toLowerCase()
       const x = []
@@ -283,7 +303,7 @@ export default {
       for (const c in e) {
         this.props2.push({ c: c, v: e[c] })
       }
-      this.props2.sort((a, b) => a.c < b.c ? -1 : (a.c === b.c ? 0 : 1))
+      this.props3 = this.props2
     },
 
     async getLignes (l) {

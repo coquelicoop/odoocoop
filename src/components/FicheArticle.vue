@@ -10,8 +10,13 @@
     </div>
 
     <q-toggle v-model="voirtoutes" class="text-h5 text-italic" left-label :label="voirtoutes ? 'Cacher les propriétés détailles' : 'Voir les propriétés détailles'"/>
+    <q-input v-if="voirtoutes" class="q-mr-lg" v-model="filtre" bottom-slots style="width:15em" dense label="Filtre sur le nom de propriété" >
+      <template v-slot:hint>
+        quelques lettres
+      </template>
+    </q-input>
     <q-scroll-area v-if="voirtoutes" class="qsa q-mt-lg q-pa-md">
-    <div v-for="a in tousAttributs" :key="a.c" class="row">
+    <div v-for="a in tousAttributs2" :key="a.c" class="row">
       <div class="champ">{{ a.c }}
         <q-tooltip>{{ a.c }}</q-tooltip>
       </div>
@@ -76,8 +81,10 @@ export default {
       voirtoutes: false,
       attributs: [],
       tousAttributs: [],
+      tousAttributs2: [],
       fournisseur: '',
       image: null,
+      filtre: '',
       titre: ''
     }
   },
@@ -94,6 +101,18 @@ export default {
       } else {
         this.ok = false
       }
+    },
+    filtre (val) {
+      if (!val) {
+        this.tousAttributs2 = this.tousAttributs
+        return
+      }
+      const x = []
+      for (let i = 0; i < this.tousAttributs.length; i++) {
+        const a = this.tousAttributs[i]
+        if (a.c.indexOf(val) !== -1) x.push(a)
+      }
+      this.tousAttributs2 = x
     }
   },
   methods: {
@@ -109,8 +128,8 @@ export default {
       for (const c in a) {
         x2.push({ c: c, v: ('' + a[c]).substring(0, 80) })
       }
-      x2.sort((a, b) => a.c < b.c ? -1 : (a.c === b.c ? 0 : 1))
       this.tousAttributs = x2
+      this.tousAttributs2 = x2
       this.nom = a.display_name
       this.fournisseur = a.default_seller_id[1].substring(0, 3)
       this.image = a.image ? 'data:image/jpg;base64,' + a.image : null

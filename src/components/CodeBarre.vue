@@ -52,6 +52,24 @@
 
       <q-page-container>
         <q-page padding>
+          <q-markup-table>
+            <thead>
+              <tr>
+                <th v-for="(c, index1) in champsL" :key="index1"  class="text-left">{{ c.n }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(a, index) in liste" :key="index"
+                :class="'cursor-pointer' + (index == courant ? ' bg-indigo-8 text-white' : '')" @click="clicArticle(index)">
+                <td v-for="(c, index3) in champsL" :key="index3" class="text-left">{{ a[c.c] }}</td>
+              </tr>
+            </tbody>
+          </q-markup-table>
+        </q-page>
+      </q-page-container>
+<!--
+      <q-page-container>
+        <q-page padding>
           <div v-for="(a, index) in liste" :key="index">
             <div :class="'row cursor-pointer' + (index == courant ? ' bg-indigo-8 text-white' : '')" @click="clicArticle(index)">
               <div class="">{{ a.cb }}
@@ -65,6 +83,7 @@
           </div>
         </q-page>
       </q-page-container>
+-->
     </q-layout>
   </q-dialog>
 
@@ -78,6 +97,12 @@ import FicheArticle from './FicheArticle.vue'
 import { jsPDF } from 'jspdf'
 
 const optionsrecherche = ['égalité stricte', 'contient ce code']
+
+const champsL = [
+  { n: 'code-barre', c: 'cb' },
+  { n: 'fournisseur', c: 'f' },
+  { n: 'nom', c: 'n' }
+]
 
 export default {
   name: 'CodeBarre',
@@ -97,6 +122,7 @@ export default {
       articles: [],
       article: false,
       aliste: false,
+      champsL: champsL,
       courant: 0
     }
   },
