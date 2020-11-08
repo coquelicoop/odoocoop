@@ -110,7 +110,9 @@ export default {
     toBase64Barcode (cb) {
       // JsBarcode(this.canvas, text, { format: 'CODE39' })
       JsBarcode(this.canvas, cb, { format: 'EAN13', flat: false, height: 100, width: 3, textMargin: 0, fontOptions: 'bold', fontSize: 32 })
-      return this.canvas.toDataURL('image/jpg')
+      const u = this.canvas.toDataURL('image/jpg')
+      this.img = u
+      return u
     }
   }
 }

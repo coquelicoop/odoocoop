@@ -67,23 +67,6 @@
           </q-markup-table>
         </q-page>
       </q-page-container>
-<!--
-      <q-page-container>
-        <q-page padding>
-          <div v-for="(a, index) in liste" :key="index">
-            <div :class="'row cursor-pointer' + (index == courant ? ' bg-indigo-8 text-white' : '')" @click="clicArticle(index)">
-              <div class="">{{ a.cb }}
-                <q-tooltip>{{ a.cb }}</q-tooltip>
-              </div>
-              <div class="q-px-lg" style="max-width:15rem">{{ a.f }}
-                <q-tooltip>{{ a.f }}</q-tooltip>
-              </div>
-              <div class="col">{{ a.n }}</div>
-            </div>
-          </div>
-        </q-page>
-      </q-page-container>
--->
     </q-layout>
   </q-dialog>
 
@@ -146,7 +129,8 @@ export default {
       if (this.estegal) {
         if (event.err) {
           this.liste = null
-          this.setArt()
+          this.article = false
+          this.aliste = false
         } else {
           await this.getArticles()
         }
@@ -158,12 +142,7 @@ export default {
     async imprimer () {
       global.App.opStart()
       const cfg = global.config.etiquettes[this.etiq]
-      let u
-      if (this.article && this.article.barcode === this.codebarre) {
-        u = this.codebarreURL
-      } else {
-        u = this.$refs.inpcb.toBase64Barcode(this.article.barcode)
-      }
+      const u = this.$refs.inpcb.toBase64Barcode(this.article.barcode)
       try {
         // eslint-disable-next-line
         const doc = new jsPDF()
@@ -229,6 +208,9 @@ export default {
     },
     setArt () {
       this.article = this.liste && this.liste.length ? this.articles[this.liste[this.courant].idx] : false
+      this.nom = this.article.display_name.substring(0, 30)
+      this.codebarre = this.article.barcode
+      this.fourn = this.article.default_seller_id[1].substring(0, 30)
     }
   }
 }
