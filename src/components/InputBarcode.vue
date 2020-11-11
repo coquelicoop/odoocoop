@@ -13,42 +13,9 @@
 </template>
 
 <script>
-import JsBarcode from 'jsbarcode'
+import { toBase64Barcode, cleEAN } from '../app/global.js'
 
 const regChiffres = RegExp(/^\d+$/)
-
-/*
-  Calcul de la clé d'un string EAN13 (bien formé, 13 chiffres)
-  Les chiffres sont numérotés de droite à gauche;
-  Soit x, la somme des chiffres pairs et y la somme des chiffres impairs
-  Calculons z = x +3*y
-  Soit m le nombre divisible par 10 immédiatement supérieur à z
-  La somme de contrôle est : m - z
-
-  Exemple : 978020113447
-  x = 4 + 3 + 1 + 2 + 8 + 9 = 27
-  y = 7 + 4 + 1 + 0 + 0 + 7 = 19
-  z = 3 * 19 + 27 = 84
-  m = 90
-  Somme de contrôle = 90 - 84 = 6
-  EAN13 ---> 9 780201 134476
-*/
-export function cleEAN (s) {
-  const v = new Array(13)
-  for (let i = 0; i < 13; i++) v[i] = s.charCodeAt(i) - 48
-  let x = 0
-  for (let i = 10; i >= 0; i = i - 2) { x += v[i] }
-  let y = 0
-  for (let i = 11; i >= 0; i = i - 2) { y += v[i] }
-  const z = (3 * y) + x
-  const r = z % 10
-  let c = 0
-  if (r !== 0) {
-    const q = Math.floor(z / 10) + 1
-    c = (q * 10) - z
-  }
-  return String.fromCharCode(48 + c)
-}
 
 export default {
   name: 'InputBarcode',
@@ -63,7 +30,6 @@ export default {
     }
   },
   mounted () {
-    this.canvas = document.createElement('canvas')
   },
   watch: {
     codebarre: function (val, old) {
@@ -77,7 +43,7 @@ export default {
     nbch () { return this.aupoids ? 7 : 13 }
   },
   methods: {
-    change (val) {
+    async change (val) {
       let cb = val.trim().replace(/\s/g, '')
       const er = this.checkcb(cb)
       if (!er) {
@@ -85,15 +51,16 @@ export default {
           const cx = cleEAN(cb + '000000')
           cb += '00000' + cx
         }
-        setTimeout(() => { this.$refs.input.resetValidation() }, 5)
-        const u = this.toBase64Barcode(cb)
-        this.img = u
-        this.$emit('cb-change', { codebarre: cb, dataURL: u })
+        this.img = toBase64Barcode(cb)
+        await this.$nextTick()
+        this.$refs.input.resetValidation()
+        this.$emit('cb-change', { codebarre: cb })
       } else {
         this.img = ''
         this.$emit('cb-change', { err: er, codebarre: cb })
       }
     },
+
     checkcb (s) {
       if (typeof s !== 'string' || s.length !== this.nbch || !regChiffres.test(s)) {
         return 'Un code-barre doit être constitué de ' + this.nbch + ' chiffres'
@@ -106,14 +73,8 @@ export default {
         }
       }
       return ''
-    },
-    toBase64Barcode (cb) {
-      // JsBarcode(this.canvas, text, { format: 'CODE39' })
-      JsBarcode(this.canvas, cb, { format: 'EAN13', flat: false, height: 100, width: 3, textMargin: 0, fontOptions: 'bold', fontSize: 32 })
-      const u = this.canvas.toDataURL('image/jpg')
-      this.img = u
-      return u
     }
+
   }
 }
 </script>

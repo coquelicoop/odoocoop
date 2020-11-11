@@ -1,13 +1,10 @@
 <template>
 <div style="margin:1rem;">
   <div class="text-h4">A propos d'un article</div>
-  <input-barcode ref="inpcb" show v-on:cb-change="cbchange" ></input-barcode>
+  <input-barcode show v-on:cb-change="cbchange" ></input-barcode>
   <div class="row justify-start items-center q-mt-lg">
     <q-select  v-model="option" :options="optionsrecherche" label="Options de recherche" style="width:20rem"/>
     <q-btn v-if="optionsrecherche[0] !== option" round color="primary" icon="search" @click="recherche" :disable="codebarre == ''" />
-  </div>
-  <div class="q-my-md">
-    <q-btn icon="print" label="Planche de code-barre" @click="imprcbouvert = true" :disable="!codebarreURL && !article" />
   </div>
   <div class="q-my-md row items-center" v-if="liste && liste.length > 1">
     <q-btn icon="skip_previous" size="sm" label="Précédent" @click="suivprec(-1)" :disable="courant === 0" />
@@ -21,19 +18,6 @@
   <div class="text-h4" v-if="!article && !chargt && codebarre">Pas d'article avec ce code-bare</div>
   <div class="text-h5 text-italic" v-if="chargt">Recherche en cours ...</div>
   <fiche-article :mon-article="article"></fiche-article>
-
-  <q-dialog v-model="imprcbouvert">
-    <q-card>
-      <q-card-section>
-        <div class="text-h5">Options d'impression pour l'imprimante : "recto", "100%", les étiquettes décollables sur la face vers le bas dans le tiroir de l'imprimante</div>
-        <q-select class="col q-mt-lg" v-model="etiq" :options="etiqs" label="Modèle d'étiquettes" style="width:10rem"/>
-      </q-card-section>
-      <q-card-actions align="right">
-        <q-btn flat label="Annuler" color="negative" v-close-popup />
-        <q-btn flat icon="print" label="IMPRIMER EN PDF" @click="imprimer" color="primary" v-close-popup />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
 
   <q-dialog v-model="aliste" full-width>
     <q-layout view="Lhh lpR fff" container class="bg-white">
@@ -59,8 +43,8 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(a, index) in liste" :key="index"
-                :class="'cursor-pointer' + (index == courant ? ' bg-indigo-8 text-white' : '')" @click="clicArticle(index)">
+              <tr v-for="(a, index) in liste" :key="index" @click="clicArticle(index)"
+                :class="'cursor-pointer' + (index == courant ? ' bg-indigo-8 text-white' : '')">
                 <td v-for="(c, index3) in champsL" :key="index3" class="text-left">{{ a[c.c] }}</td>
               </tr>
             </tbody>
@@ -74,10 +58,10 @@
 </template>
 
 <script>
-import { global, post } from '../app/global.js'
+import { global } from '../app/global.js'
+import { productsByBarcode, setSupplierinfo } from '../app/reqOdoo.js'
 import InputBarcode from './InputBarcode.vue'
 import FicheArticle from './FicheArticle.vue'
-import { jsPDF } from 'jspdf'
 
 const optionsrecherche = ['égalité stricte', 'contient ce code']
 
@@ -96,9 +80,6 @@ export default {
       optionsrecherche: optionsrecherche,
       option: optionsrecherche[0],
       codebarre: '',
-      codebarreURL: null,
-      etiq: '',
-      etiqs: [],
       erreur: null,
       chargt: false,
       liste: [],
@@ -110,79 +91,34 @@ export default {
     }
   },
   mounted () {
-    const t = []
-    for (const e in global.config.etiquettes) t.push(e)
-    this.etiqs = t
-    this.etiq = this.etiqs[0]
   },
   computed: {
     estegal () { return optionsrecherche[0] === this.option }
   },
   methods: {
-    suivprec (n) {
+    async suivprec (n) {
       this.courant += n
-      this.setArt()
+      await this.setArt()
     },
+
     async cbchange (event) {
       this.codebarre = event.codebarre
-      this.codebarreURL = event.dataURL
       if (this.estegal) {
         if (event.err) {
           this.liste = null
           this.article = false
           this.aliste = false
         } else {
-          await this.getArticles()
+          await this.recherche()
         }
       }
     },
+
     async recherche () {
-      await this.getArticles()
-    },
-    async imprimer () {
-      global.App.opStart()
-      const cfg = global.config.etiquettes[this.etiq]
-      const u = this.$refs.inpcb.toBase64Barcode(this.article.barcode)
-      try {
-        // eslint-disable-next-line
-        const doc = new jsPDF()
-        doc.setFont('fixed')
-        doc.setFontSize(9)
-
-        for (let i = 0; i < cfg.nx; i++) {
-          for (let j = 0; j < cfg.ny; j++) {
-            const x1 = cfg.g + (i * cfg.dx) - 2
-            const y1 = cfg.h + (j * cfg.dy) + 2
-            doc.addImage(u, 'JPEG', x1, y1, cfg.cbl, cfg.dy - 2, 'IMG1', 'NONE', 0)
-          }
-        }
-
-        const label = this.fourn + ' - ' + this.codebarre + ' - ' + this.nom
-        doc.text(label, cfg.g, 290)
-
-        const blob = doc.output('blob')
-        const url = URL.createObjectURL(blob)
-        window.open(url)
-      } catch (e) {
-        console.log(e.message)
-      }
-      global.App.opComplete()
-    },
-    async getArticles () {
       global.App.opStart()
       this.chargt = true
       try {
-        const params = { // paramètres requis pour le search_read de articles à peser
-          ids: [],
-          domain: [['barcode', this.estegal ? '=' : 'like', this.codebarre]],
-          // fields: fields, // omettre cette ligne pour avoir TOUS les champs
-          order: '',
-          limit: 9999,
-          offset: 0
-        }
-        this.articles = await post('m1/search_read', { model: 'product.product', params: params, timeout: 20000 })
-        console.log('nb articles : ' + this.articles.length)
-        // console.log(JSON.stringify(articles))
+        this.articles = await productsByBarcode(this.codebarre)
         this.liste = []
         if (this.articles.length) {
           for (let i = 0; i < this.articles.length; i++) {
@@ -193,7 +129,7 @@ export default {
           this.liste.sort((a, b) => a.cb < b.cb ? -1 : (a.cb === b.cb ? 0 : 1))
         }
         this.courant = 0
-        this.setArt()
+        await this.setArt()
         this.aliste = this.liste.length > 1
       } catch (e) {
         console.log(e.message)
@@ -201,16 +137,22 @@ export default {
       this.chargt = false
       global.App.opComplete()
     },
-    clicArticle (index) {
+
+    async clicArticle (index) {
       this.courant = index
-      this.setArt()
+      await this.setArt()
       this.aliste = false
     },
-    setArt () {
-      this.article = this.liste && this.liste.length ? this.articles[this.liste[this.courant].idx] : false
-      this.nom = this.article.display_name.substring(0, 30)
-      this.codebarre = this.article.barcode
-      this.fourn = this.article.default_seller_id[1].substring(0, 30)
+
+    async setArt () {
+      const a = this.liste && this.liste.length ? this.articles[this.liste[this.courant].idx] : false
+      this.nom = a.display_name.substring(0, 30)
+      this.codebarre = a.barcode
+      this.fourn = a.default_seller_id[1].substring(0, 30)
+      if (!a.supplierinfo) {
+        await setSupplierinfo(a)
+      }
+      this.article = a // Asignation à la fin : il y a un await plus haut, ne pas assigner AVANT
     }
   }
 }

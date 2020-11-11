@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { remove } from './accents.js'
+import JsBarcode from 'jsbarcode'
 
 export const global = { }
 
@@ -136,6 +137,13 @@ export function cleEAN (s) {
     c = (q * 10) - z
   }
   return String.fromCharCode(48 + c)
+}
+
+export function toBase64Barcode (cb) {
+  if (!global.canvas) global.canvas = document.createElement('canvas')
+  // JsBarcode(this.canvas, text, { format: 'CODE39' })
+  JsBarcode(global.canvas, cb, { format: 'EAN13', flat: false, height: 100, width: 3, textMargin: 0, fontOptions: 'bold', fontSize: 32 })
+  return global.canvas.toDataURL('image/jpg')
 }
 
 /*
