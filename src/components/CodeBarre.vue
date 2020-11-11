@@ -149,7 +149,7 @@ export default {
       this.nom = a.display_name.substring(0, 30)
       this.codebarre = a.barcode
       this.fourn = a.default_seller_id[1].substring(0, 30)
-      if (!a.supplierinfo) {
+      if (a.seller_ids.length && a.supplierinfo.length !== a.seller_ids.length) {
         await setSupplierinfo(a)
       }
       this.article = a // Asignation à la fin : il y a un await plus haut, ne pas assigner AVANT
