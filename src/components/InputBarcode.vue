@@ -48,8 +48,9 @@ export default {
       const er = this.checkcb(cb)
       if (!er) {
         if (this.aupoids) {
-          const cx = cleEAN(cb + '000000')
-          cb += '00000' + cx
+          const cy = cb.substring(0, 7)
+          const cx = cleEAN(cy + '000000')
+          cb = cy + '00000' + cx
         }
         this.img = toBase64Barcode(cb)
         await this.$nextTick()
@@ -62,14 +63,18 @@ export default {
     },
 
     checkcb (s) {
-      if (typeof s !== 'string' || s.length !== this.nbch || !regChiffres.test(s)) {
-        return 'Un code-barre doit être constitué de ' + this.nbch + ' chiffres'
-      }
       if (!this.aupoids) {
+        if (typeof s !== 'string' || !regChiffres.test(s) || s.length !== 13) {
+          return 'Un code-barre doit être constitué de 13 chiffres'
+        }
         const c = cleEAN(s)
         const cx = s.substring(12)
         if (c !== cx) {
           return 'Celle calculée ' + c + ', celle saisie ' + cx
+        }
+      } else {
+        if (typeof s !== 'string' || !regChiffres.test(s) || (s.length !== 13 && s.length !== 7)) {
+          return 'Un code-barre au poids doit être constitué de 7 ou 13 chiffres'
         }
       }
       return ''
