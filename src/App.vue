@@ -48,7 +48,7 @@
       <q-card>
         <q-card-section>
         <q-select v-model="cenv" :options="envs" label="Environnements" style="width:10rem"/>
-        <q-input input-class="login" bottom-slots v-model="username" label-slot style="width:20rem">
+        <q-input input-class="login" bottom-slots v-model="username1" label-slot style="width:20rem">
           <template v-slot:label>
             <span class="login">E-mail de connexion au portail</span>
           </template>
@@ -124,6 +124,7 @@ export default {
       menuOuvert: false,
       loginOuvert: true,
       erreurOuvert: false,
+      username1: '',
       username: '',
       password: '',
       abort: false,
@@ -150,7 +151,7 @@ export default {
     this.cenv = this.config.envs.p
   },
   watch: {
-    cenv: function (val) {
+    cenv (val) {
       for (const e in this.config.envs) {
         if (this.config.envs[e] === val) {
           global.env = e
@@ -158,6 +159,15 @@ export default {
         }
       }
       this.menuOuvert = false
+    },
+    async username1 (val) {
+      if (this.config.defusername && val === this.config.defusername.code) {
+        this.username = this.config.defusername.username
+        this.password = this.config.defusername.password
+        await this.connection()
+      } else {
+        this.username = this.username1
+      }
     }
   },
   methods: {
