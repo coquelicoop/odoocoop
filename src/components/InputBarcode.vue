@@ -4,7 +4,7 @@
       <q-checkbox class="col" style="width:12rem" v-model="aupoids" label="Au poids" />
       <q-input class="col" ref="input" bottom-slots v-model="codebarre" clearable mask='####### ##### #'
           clear-icon="close" label="Code barre" counter
-          :rules="[ val => checkcb(val.trim().replace(/\s/g, '')) ]"
+          :rules="[ val => checkcb((val || '').trim().replace(/\s/g, '')) ]"
           style="min-width:15rem;">
       </q-input>
     </div>
@@ -44,7 +44,7 @@ export default {
   },
   methods: {
     async change (val) {
-      let cb = val.trim().replace(/\s/g, '')
+      let cb = val ? val.trim().replace(/\s/g, '') : ''
       const er = this.checkcb(cb)
       if (!er) {
         if (this.aupoids) {
