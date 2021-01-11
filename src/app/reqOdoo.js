@@ -64,11 +64,10 @@ export async function setSupplierinfo (a, fields) {
 /**********************************************************************
 codebarre : code-barre du produit, ou une partie de celui-ci
 fields : champs demandés
-Si le code-barre a 13 chiffres, retourne l'article sinon une liste d'articles
+Si l'argument un est vrai retourne l'article sinon une liste d'articles
 product.product = ['id', 'taxes_id', 'product_uom', 'product_id', 'price_unit', 'price_subtotal', 'price_total', 'price_tax', 'state', 'qty_invoiced', 'qty_received', 'discount', 'package_qty', 'indicative_package', 'product_qty_package', 'product_qty', 'price_unit_tax', 'create_uid', 'create_date', 'write_uid', 'write_date', 'product_type', 'unit_price', 'package_price', '__last_update']
 */
-export async function productsByBarcode (codebarre, fields) {
-  const un = codebarre.legth === 13
+export async function productsByBarcode (codebarre, un, fields) {
   const params = { // paramètres requis pour le search_read de articles à peser
     ids: [],
     domain: [['barcode', un ? '=' : 'like', codebarre]],

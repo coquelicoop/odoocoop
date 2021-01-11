@@ -3,7 +3,7 @@
     <div class="text-h4">{{ titre }}</div>
     <div class="q-my-md row items-center">
       <img class="q-mr-lg" style="width:15rem" :src="cbimage"/>
-      <q-btn icon="print" label="Planche de code-barre" @click="imprcbouvert = true"/>
+      <q-btn icon="print" label="Planche de code-barre" @click="imprcbouvert = true" :disable="!cbimage"/>
     </div>
 
     <div v-if="image !== null" class="img bg-grey-2"><img class="img" :src="image"/></div>
@@ -124,7 +124,7 @@ export default {
   },
   watch: {
     'monArticle' (newval) {
-      console.log('Dans FicheArticle New val: ' + JSON.stringify(newval).substring(0, 50))
+      // console.log('Dans FicheArticle New val: ' + JSON.stringify(newval).substring(0, 50))
       if (newval) {
         this.chgArticle(newval)
         this.ok = true
@@ -164,9 +164,12 @@ export default {
       this.tousAttributs2 = x2
       this.filtrer()
       this.nom = a.display_name
-      this.fournisseur = a.default_seller_id[1].substring(0, 3)
+      this.fournisseur = a.fournisseur ? a.fournisseur.substring(0, 3) : '???'
       this.codebarre = a.barcode
-      this.cbimage = toBase64Barcode(a.barcode)
+      this.cbimage = null
+      if (a.barcode && a.barcode.length === 13) {
+        this.cbimage = toBase64Barcode(a.barcode)
+      }
       this.image = a.image ? 'data:image/jpg;base64,' + a.image : null
       this.titre = this.fournisseur + ' - ' + this.nom +
         (a.sale_ok && a.available_in_pos ? ' - passe en caisse' : ' - NE passe PAS en caisse') +

@@ -2,9 +2,9 @@
 <div style="margin:1rem;">
   <div class="text-h4">A propos d'un article</div>
   <input-barcode show v-on:cb-change="cbchange" ></input-barcode>
-  <div class="row justify-start items-center q-mt-lg">
-    <q-select  v-model="option" :options="optionsrecherche" label="Options de recherche" style="width:20rem"/>
-    <q-btn v-if="optionsrecherche[0] !== option" round color="primary" icon="search" @click="recherche" :disable="codebarre == ''" />
+  <div class="row justify-start items-center q-my-lg">
+    <q-btn color="primary" class="q-ma-sm" icon-right="search" @click="rechercheeq" label="Ayant exactement ce code-barre"/>
+    <q-btn color="secondary" class="q-ma-sm" icon-right="search" @click="recherche" label="Dont le code-barre contient ce code"/>
   </div>
   <div class="q-my-md row items-center" v-if="liste && liste.length > 1">
     <q-btn icon="skip_previous" size="sm" label="Précédent" @click="suivprec(-1)" :disable="courant === 0" />
@@ -12,10 +12,10 @@
     <q-btn icon-right="skip_next" size="sm" label="Suivant" @click="suivprec(1)" :disable="courant === liste.length - 1" />
     <q-btn icon="view_list" size="sm" label="Voir la liste" @click="aliste = true" />
   </div>
-  <div class="text-h4 text-red-5" v-if="this.codebarre.length === 13 && article && article.barcode !== this.codebarre">
+  <div class="text-h4 text-red-5" v-if="article && un && (article.barcode !== codebarre)">
     Le code-barre dans Odoo n'est pas exactement celui recherché (espaces ? autres caractères ?)
   </div>
-  <div class="text-h4" v-if="!article && !chargt && codebarre">Pas d'article avec ce code-bare</div>
+  <div class="text-h4" v-if="cherche && !article && !chargt">Pas d'article avec ce code-barre</div>
   <div class="text-h5 text-italic" v-if="chargt">Recherche en cours ...</div>
   <fiche-article :mon-article="article"></fiche-article>
 
@@ -63,8 +63,6 @@ import { productsByBarcode, setSupplierinfo } from '../app/reqOdoo.js'
 import InputBarcode from './InputBarcode.vue'
 import FicheArticle from './FicheArticle.vue'
 
-const optionsrecherche = ['égalité stricte', 'contient ce code']
-
 const champsL = [
   { n: 'code-barre', c: 'cb' },
   { n: 'fournisseur', c: 'f' },
@@ -77,11 +75,11 @@ export default {
   data () {
     return {
       imprcbouvert: false,
-      optionsrecherche: optionsrecherche,
-      option: optionsrecherche[0],
+      un: true,
       codebarre: '',
       erreur: null,
       chargt: false,
+      cherche: false,
       liste: [],
       articles: [],
       article: false,
@@ -92,9 +90,6 @@ export default {
   },
   mounted () {
   },
-  computed: {
-    estegal () { return optionsrecherche[0] === this.option }
-  },
   methods: {
     async suivprec (n) {
       this.courant += n
@@ -103,28 +98,29 @@ export default {
 
     async cbchange (event) {
       this.codebarre = event.codebarre
-      if (this.estegal) {
-        if (event.err) {
-          this.liste = null
-          this.article = false
-          this.aliste = false
-        } else {
-          await this.recherche()
-        }
-      }
+      this.liste = null
+      this.article = false
+      this.aliste = false
+      this.cherche = false
     },
 
-    async recherche () {
+    async rechercheeq () {
+      await this.recherche(true)
+    },
+
+    async recherche (eq) {
+      this.un = eq === true
       global.App.opStart()
       this.chargt = true
       try {
-        this.articles = await productsByBarcode(this.codebarre)
+        const r = await productsByBarcode(this.codebarre, this.un)
+        this.articles = this.un ? [r] : r
         this.liste = []
         if (this.articles.length) {
           for (let i = 0; i < this.articles.length; i++) {
             const a = this.articles[i]
-            const f = a.default_seller_id && a.default_seller_id.length === 2 ? a.default_seller_id[1] : ''
-            this.liste.push({ cb: a.barcode, f: f, n: a.display_name, idx: i })
+            a.fournisseur = a.default_seller_id && a.default_seller_id.length === 2 ? a.default_seller_id[1] : ''
+            this.liste.push({ cb: a.barcode, f: a.fournisseur, n: a.display_name, idx: i })
           }
           this.liste.sort((a, b) => a.cb < b.cb ? -1 : (a.cb === b.cb ? 0 : 1))
         }
@@ -135,6 +131,7 @@ export default {
         console.log(e.message)
       }
       this.chargt = false
+      this.cherche = true
       global.App.opComplete()
     },
 
@@ -145,13 +142,16 @@ export default {
     },
 
     async setArt () {
+      this.article = null
       const a = this.liste && this.liste.length ? this.articles[this.liste[this.courant].idx] : false
       this.nom = a.display_name.substring(0, 30)
       this.codebarre = a.barcode
-      this.fourn = a.default_seller_id[1].substring(0, 30)
+      this.fourn = a.fournisseur.substring(0, 30)
+      this.chargt = true
       if (a.seller_ids.length && a.supplierinfo.length !== a.seller_ids.length) {
         await setSupplierinfo(a)
       }
+      this.chargt = false
       this.article = a // Asignation à la fin : il y a un await plus haut, ne pas assigner AVANT
     }
   }
